@@ -1,0 +1,22 @@
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node / package manager detritus (in case a skill adds scripts later)
+node_modules/
+npm-debug.log*
+yarn-error.log
+.pnpm-store/
+
+# Python (if a skill's scripts/ dir uses Python)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local scratch / experiment folders
+/tmp/
+/scratch/
