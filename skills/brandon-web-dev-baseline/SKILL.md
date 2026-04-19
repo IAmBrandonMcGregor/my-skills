@@ -1,10 +1,10 @@
 ---
 name: brandon-web-dev-baseline
-description: Brandon's personal baseline code-quality conventions for any web development work — JavaScript, TypeScript, HTML, CSS, or Svelte. Covers function sizing (inverse relationship between length and call-site count), liberal inline commenting of logic sections, predictable top-of-file structure for modules and Svelte component scripts, naming conventions for variables/files/CSS classes, and error-handling philosophy. Use this skill whenever writing, reviewing, or refactoring code in a web project; whenever deciding whether to extract a helper or inline something; whenever organizing imports, props, state, or section comments in a component/module; whenever choosing variable, file, or class names; and whenever a `try/catch`, `throw`, or promise rejection is involved. Also apply when the user mentions "clean up", "refactor", "split this up", or asks for a code review on web code.
+description: Brandon's personal baseline code-quality conventions for any web development work — JavaScript, TypeScript, HTML, CSS, or Svelte. Covers function sizing (inverse relationship between length and call-site count), required TSDoc/JSDoc comments on named functions, liberal inline commenting of logic sections, predictable top-of-file structure for modules and Svelte component scripts, naming conventions for variables/files/CSS classes, and error-handling philosophy. Use this skill whenever writing, reviewing, or refactoring code in a web project; whenever deciding whether to extract a helper or inline something; whenever organizing imports, props, state, or section comments in a component/module; whenever choosing variable, file, or class names; and whenever a `try/catch`, `throw`, or promise rejection is involved. Also apply when the user mentions "clean up", "refactor", "split this up", or asks for a code review on web code.
 license: MIT
 metadata:
   author: iambrandonmcgregor
-  version: "1.1"
+  version: "1.2"
 ---
 
 # Web dev baseline
@@ -13,7 +13,7 @@ Opinionated code-quality conventions that apply to every web project I work on. 
 
 The five topics covered here:
 
-1. Function sizing
+1. Function sizing and TSDoc/JSDoc function documentation
 2. Inline comments on logic sections
 3. Top-of-file structure for modules and component scripts
 4. Naming conventions
@@ -23,17 +23,58 @@ Each section states the rule, explains *why* it matters, then shows concrete rig
 
 ---
 
-## 1. Function sizing: length is inversely related to reuse
+## 1. Function sizing and documentation: length is inversely related to reuse
 
 **The rule.** A function's ideal length is inversely proportional to how often it's called.
 
 - A function called in one place should generally stay inline, even if it grows to 30, 50, or 80 lines, if extracting it would not meaningfully improve readability or reuse.
 - A function called from many places can and should be kept tight — 3 to 10 lines — so each caller absorbs it cheaply.
 - Do not extract a 3-line helper that is called from exactly one place. That's abstraction for its own sake and costs more than it saves.
+- Functions should include a TSDoc/JSDoc comment that explains intent, inputs, outputs, and notable side effects.
 
 **Why.** Abstractions have a tax: readers have to jump to the definition, carry a mental model of the helper's contract, and worry about whether behavior is safe to change. That tax is worth paying when many callers share the helper — the savings compound. It is **not** worth paying for a one-off. Inlined code lets the reader see exactly what happens in the function they're already reading, with no indirection.
 
 The mirror point: a tight, well-named 4-line function used in twenty places pays for itself twenty times over. Keep those short, because every extra line there is paid for twenty times.
+
+### Function documentation requirement
+
+**The rule.** Add a TSDoc/JSDoc block above named functions by default.
+
+- Include what the function does, key params, return value, and side effects when relevant.
+- If a function can throw, fail, or return sentinel values (`null`, `undefined`, discriminated states), document that behavior.
+- For tiny inline callbacks and obvious framework glue, a full doc block is optional, but prefer adding one when behavior is non-trivial.
+
+### Wrong: function with no contract comment
+
+```ts
+function buildInvoiceSummary(lines: InvoiceLine[], taxRate: number) {
+  const subtotal = lines.reduce((sum, line) => sum + line.amount, 0);
+  return {
+    subtotal,
+    tax: subtotal * taxRate,
+    total: subtotal * (1 + taxRate),
+  };
+}
+```
+
+### Right: function with TSDoc
+
+```ts
+/**
+ * Builds subtotal/tax/total values for a set of invoice lines.
+ * @param lines - Invoice lines expressed in major currency units.
+ * @param taxRate - Decimal tax rate (`0.07` for 7%).
+ * @returns Aggregated invoice totals for rendering and persistence.
+ */
+function buildInvoiceSummary(lines: InvoiceLine[], taxRate: number) {
+  const subtotal = lines.reduce((sum, line) => sum + line.amount, 0);
+  return {
+    subtotal,
+    tax: subtotal * taxRate,
+    total: subtotal * (1 + taxRate),
+  };
+}
+```
 
 **Rules of thumb for deciding.**
 
