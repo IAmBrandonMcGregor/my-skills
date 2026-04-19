@@ -1,22 +1,23 @@
 ---
 name: brandon-bootstrap
-description: Brandon's Bootstrap implementation conventions for app UI work. Use this skill whenever writing, reviewing, or refactoring Bootstrap-based markup, Sass, or theme files; whenever the user wants layout/styling changes in a Bootstrap app; whenever you are deciding between utility classes and handwritten CSS; and whenever colors, fonts, spacing, widths, breakpoints, or component theming should propagate consistently through the app. Prefer Bootstrap utility classes for individual elements, and prefer Bootstrap Sass variables/maps over one-off overrides when the change is thematic or cross-cutting.
+description: Brandon's Bootstrap implementation conventions for app UI work. Use this skill whenever writing, reviewing, or refactoring Bootstrap-based markup, Sass, or theme files; whenever the user wants layout/styling changes in a Bootstrap app; whenever you are deciding between utility classes and handwritten CSS; and whenever colors, fonts, spacing, widths, breakpoints, or component theming should propagate consistently through the app. Prefer Bootstrap utility classes for individual elements. For stylesheet-level updates, follow this strict order: existing Bootstrap Sass variables/maps, then existing Bootstrap CSS variables, then existing Bootstrap class overloads, then Bootstrap-aligned class variants, and only then standalone vanilla CSS.
 license: MIT
 metadata:
   author: iambrandonmcgregor
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Brandon Bootstrap
 
 Opinionated Bootstrap conventions for projects that already use Bootstrap or should clearly lean on it. The goal is to push styling decisions upward into Bootstrap's system so the UI stays consistent, reviewable, and cheap to change later.
 
-The four topics covered here:
+The five topics covered here:
 
 1. Prefer utility classes over handwritten CSS on individual elements
-2. Push thematic changes into Bootstrap Sass variables and maps
+2. Always use Bootstrap's style system in a strict fallback order
 3. Write custom Sass only when Bootstrap cannot express the job cleanly
-4. Review Bootstrap code for system drift, not just visual correctness
+4. Use modern CSS features that align with Bootstrap and current browser support
+5. Review Bootstrap code for system drift, not just visual correctness
 
 ---
 
@@ -69,7 +70,7 @@ Use the semantic class for the reusable component identity. Use utilities for th
 
 ## 2. Push thematic changes into Bootstrap Sass variables and maps
 
-**The rule.** If the change is thematic or likely to repeat across the app, update Bootstrap's Sass variables, maps, or utility configuration instead of overriding leaf elements one by one.
+**The rule.** For style updates, always start with existing Bootstrap Sass variables/maps before touching selectors, CSS variables, or custom classes.
 
 **Why.** Theme changes should propagate from a small number of source tokens. If brand color, font family, container width, border radius, or spacing scale changes, the right fix is almost never "patch twelve selectors." Update the Bootstrap inputs so components and utilities inherit the new design automatically.
 
@@ -81,6 +82,18 @@ Use the semantic class for the reusable component identity. Use utilities for th
 - borders and surfaces: `$border-radius`, `$border-color`, `$box-shadow`
 - layout widths: `$container-max-widths`, `$grid-breakpoints`
 - generated utilities: utility maps and Bootstrap's utilities API
+
+### Mandatory fallback order for style updates
+
+Follow this exact order when a styling change cannot be solved with existing Bootstrap utility classes in markup:
+
+1. Update an existing Bootstrap Sass variable/map first.
+2. If no Sass variable exists for the target style but Bootstrap exposes a related CSS variable (`--bs-*`), override that CSS variable with the smallest safe selector scope.
+3. If neither Sass nor CSS variables are available, overload an existing Bootstrap class that already represents that component.
+4. If no suitable class exists, add a Bootstrap-aligned variant class that extends the existing component pattern (naming, spacing rhythm, state behavior).
+5. Use standalone vanilla CSS only when no existing Bootstrap component or variant path can model the requirement cleanly.
+
+Do not skip steps in this order.
 
 ### Wrong: patch the theme at the leaves
 
@@ -137,11 +150,22 @@ $utilities: map-merge(
 
 That lets the app use utilities like `ls-wide` instead of sprinkling handwritten CSS helpers everywhere.
 
+### Right: prefer scoped Bootstrap CSS variable overrides before class-level overrides
+
+```scss
+.billing-card {
+  --bs-card-border-color: var(--bs-primary);
+  --bs-card-cap-bg: color-mix(in srgb, var(--bs-primary) 8%, transparent);
+}
+```
+
+This keeps the change inside Bootstrap's token system and avoids brittle property-level overrides.
+
 ---
 
 ## 3. Write custom Sass only when Bootstrap cannot express the job cleanly
 
-**The rule.** Write custom Sass for real component behavior or styling Bootstrap does not provide cleanly. Do not write Sass just because it feels tidier than a few utility classes.
+**The rule.** Write custom Sass only after the fallback order above fails. Do not write Sass just because it feels tidier than a few utility classes.
 
 **Good reasons for custom Sass:**
 
@@ -201,15 +225,38 @@ That is a good Sass use case because Bootstrap utilities do not express the pseu
 
 ---
 
-## 4. Review Bootstrap code for system drift, not just visual correctness
+## 4. Use modern CSS that fits Bootstrap's philosophy
+
+Use modern CSS when writing custom rules, but stay aligned with Bootstrap's compatibility posture and avoid novelty for novelty's sake.
+
+Prefer:
+
+- CSS custom properties for token propagation and local scoping
+- logical properties (`margin-inline`, `padding-block`, `inset-inline-start`) for direction-aware layouts
+- modern layout primitives (`gap`, flexbox, grid) where Bootstrap utilities do not already solve the need
+- functions like `clamp()` and `min()`/`max()` where they improve responsiveness cleanly
+
+Avoid:
+
+- introducing experimental features Bootstrap does not rely on in production
+- feature choices that require heavy fallback layers for the app's target evergreen browsers
+- custom CSS abstractions that duplicate Bootstrap utilities without clear value
+
+When in doubt, choose the most Bootstrap-native and broadly supported option.
+
+---
+
+## 5. Review Bootstrap code for system drift, not just visual correctness
 
 When writing or reviewing Bootstrap-based UI, check these in order:
 
 1. Could this element be styled with existing Bootstrap utilities instead of custom Sass?
-2. If the same style appears in multiple places, should the change move into Bootstrap Sass variables or utility configuration?
-3. Is any custom Sass doing real component work, or is it hiding spacing/typography/color choices that belong in markup or theme config?
-4. Are we overriding Bootstrap after the fact when we should be setting the upstream variable before Bootstrap is compiled?
-5. Will a future brand refresh be able to change this area centrally, or did we hard-code leaf styles that will have to be hunted down later?
+2. If this needs stylesheet changes, did we try existing Bootstrap Sass variables/maps first?
+3. If no Sass variable exists, did we try overriding Bootstrap's existing CSS variables with minimal selector scope?
+4. If variables are not available, are we overloading an existing Bootstrap class before inventing new standalone CSS?
+5. If a new class is required, does it extend an existing Bootstrap component pattern instead of creating disconnected styling?
+6. Is any custom Sass doing real component work, or is it hiding spacing/typography/color choices that belong in markup or theme config?
+7. Will a future brand refresh be able to change this area centrally, or did we hard-code leaf styles that will have to be hunted down later?
 
 ### Wrong: local override that fights the system
 
@@ -242,9 +289,13 @@ $headings-font-family: "Merriweather", Georgia, serif;
 When editing Bootstrap projects:
 
 1. Start by asking whether the change can be solved with existing Bootstrap classes in the markup.
-2. If the change is thematic or repeated, move one level up and modify Bootstrap Sass variables, maps, or generated utilities.
-3. Add handwritten Sass only after Bootstrap utilities and theme configuration both fail to express the requirement cleanly.
-4. Keep custom selectors focused on component structure, pseudo-elements, complex states, or behavior Bootstrap does not model well.
-5. When reviewing code, flag one-off Sass that should be replaced by Bootstrap utilities or upstream theme configuration.
+2. If stylesheet changes are needed, update existing Bootstrap Sass variables/maps first.
+3. If Sass variables do not exist for that concern, override existing Bootstrap CSS variables (`--bs-*`) with the narrowest selector scope that still solves the requirement.
+4. If Bootstrap has no relevant Sass or CSS variable, overload an existing Bootstrap class for that component.
+5. If no class exists to overload, add a Bootstrap-aligned variant class that extends an existing Bootstrap component pattern.
+6. Use standalone vanilla CSS only when no Bootstrap variable, class, or component-extension route works cleanly.
+7. Prefer modern CSS features supported across current evergreen browsers, and choose features Bootstrap itself treats as safe patterns.
+8. Keep custom selectors focused on component structure, pseudo-elements, complex states, or behavior Bootstrap does not model well.
+9. When reviewing code, flag one-off Sass that should be replaced by Bootstrap utilities, upstream variables, or Bootstrap-aligned class extensions.
 
 If the project already has an established Bootstrap theme entrypoint or token file, make changes there rather than scattering overrides across unrelated partials.
