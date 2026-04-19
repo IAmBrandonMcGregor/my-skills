@@ -1,0 +1,17 @@
+{
+  "name": "my-skills",
+  "version": "1.0.0",
+  "description": "A collection of AI skills for software development",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "skill",
+    "skills"
+  ],
+  "author": "Brandon McGregor",
+  "license": "ISC"
+}
