@@ -1,22 +1,23 @@
 ---
 name: brandon-web-dev-baseline
-description: Brandon's personal baseline code-quality conventions for any web development work — JavaScript, TypeScript, HTML, CSS, or Svelte. Covers function sizing (inverse relationship between length and call-site count), liberal inline commenting of logic sections, naming conventions for variables/files/CSS classes, and error-handling philosophy. Use this skill whenever writing, reviewing, or refactoring code in a web project; whenever deciding whether to extract a helper or inline something; whenever choosing variable, file, or class names; and whenever a `try/catch`, `throw`, or promise rejection is involved. Also apply when the user mentions "clean up", "refactor", "split this up", or asks for a code review on web code.
+description: Brandon's personal baseline code-quality conventions for any web development work — JavaScript, TypeScript, HTML, CSS, or Svelte. Covers function sizing (inverse relationship between length and call-site count), liberal inline commenting of logic sections, predictable top-of-file structure for modules and Svelte component scripts, naming conventions for variables/files/CSS classes, and error-handling philosophy. Use this skill whenever writing, reviewing, or refactoring code in a web project; whenever deciding whether to extract a helper or inline something; whenever organizing imports, props, state, or section comments in a component/module; whenever choosing variable, file, or class names; and whenever a `try/catch`, `throw`, or promise rejection is involved. Also apply when the user mentions "clean up", "refactor", "split this up", or asks for a code review on web code.
 license: MIT
 metadata:
   author: iambrandonmcgregor
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Web dev baseline
 
 Opinionated code-quality conventions that apply to every web project I work on. Follow these whenever writing or editing JavaScript, TypeScript, HTML, CSS, or Svelte — and for other languages, treat them as sensible defaults unless something else overrides.
 
-The four topics covered here:
+The five topics covered here:
 
 1. Function sizing
 2. Inline comments on logic sections
-3. Naming conventions
-4. Error handling
+3. Top-of-file structure for modules and component scripts
+4. Naming conventions
+5. Error handling
 
 Each section states the rule, explains *why* it matters, then shows concrete right/wrong examples. The examples are the most important part — prefer pattern-matching the examples over parsing the prose.
 
@@ -198,7 +199,95 @@ count++;
 
 ---
 
-## 3. Naming conventions
+## 3. Top-of-file structure for modules and component scripts
+
+**The rule.** Give component scripts and standalone modules a readable top-to-bottom narrative. Start with a dedicated import section, then group the rest of the file into clearly labeled sections. In Svelte, the `Component Props` section comes immediately after the import/env block.
+
+**Why.** Most web files are read linearly. A predictable structure reduces scan time, makes reviews faster, and gives both humans and AI agents a stable place to look for props, state, handlers, derived values, and setup logic. The goal is not ceremony for its own sake; it is to make the file easy to skim and safe to edit.
+
+**Use this structure by default.**
+
+- Start the file with `// Include our external dependencies`, followed immediately by the import block.
+- Keep import-like env dependencies in that same opening block. Do not scatter imports or env setup deeper in the file unless the framework requires it.
+- In Svelte, place the `// Component Props` section immediately after the imports/env block.
+- After that, organize the rest of the file into logical sections such as local state, effects/setup, event handlers, derived data, configuration, or exports.
+- Small sections can use a normal `// Section Name` comment.
+- Larger sections should use a header comment followed by a dashed divider line so the section break is visually obvious.
+
+### Right: predictable Svelte component structure
+
+```svelte
+<script lang="ts">
+  // Include our external dependencies
+  import { setContext } from "svelte";
+  import { url } from "mcgregor-utils";
+  import Logo from "brand/assets/logo.png";
+  import UserDropdownMenu from "../atoms/user-dropdown-menu.svelte";
+
+  // Component Props
+  let {
+    children = () => {},
+    selectedScan = null,
+  } = $props();
+
+  // Menu Expansion
+  let isMenuExpanded = $state(false);
+
+  function closeMenu() {
+    isMenuExpanded = false;
+  }
+
+  // Scroll Reset after inner page navigation
+  // - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - - |
+  let doesScrollResetOnNav = $state(true);
+  let pageSectionEl: HTMLElement;
+
+  url.subscribe(resetScroll);
+
+  function resetScroll(force: any = false) {
+    if (!pageSectionEl) return;
+    if (force === true || doesScrollResetOnNav) {
+      pageSectionEl.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }
+
+  setContext("resetScroll", () => resetScroll(true));
+
+  // Page & Nav Descriptions
+  // - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - -  - - |
+  const navEntries = [
+    { hed: "Journal", segments: ["journal"] },
+    { hed: "Compare", segments: ["compare"] },
+  ];
+</script>
+```
+
+### Wrong: mixed concerns and unlabeled sections
+
+```ts
+const navEntries = buildNavEntries();
+
+import { url } from "mcgregor-utils";
+
+let doesScrollResetOnNav = true;
+let selectedScan = null;
+
+export function resetScroll() {
+  // ...
+}
+```
+
+This is harder to scan because the imports are not at the top, props/state/setup are interleaved, and the reader has to infer the structure from raw mechanics.
+
+### Notes
+
+- The exact section names can vary. Prefer comments that name the job of the section in plain English.
+- Do not add decorative headers to tiny files that only contain one obvious block of code. The structure should help readability, not overwhelm it.
+- If a section spans more than a small handful of lines or contains multiple related concepts, prefer the dashed divider style.
+
+---
+
+## 4. Naming conventions
 
 ### Variables and functions (JS/TS)
 
@@ -266,7 +355,7 @@ src/
 
 ---
 
-## 4. Error handling philosophy
+## 5. Error handling philosophy
 
 **The rule.** Handle errors where you have the information to decide what to do. Let them propagate otherwise. Never swallow an error silently.
 
@@ -350,12 +439,14 @@ When editing or writing code:
 
 1. Before writing a new function, ask: how many places will call this? If the answer is "one, probably forever", inline it unless it meaningfully clarifies the caller.
 2. As you write each logical section (3-10 lines of related work), lead it with a short comment naming the intent.
-3. When choosing a name, match the casing convention for that kind of thing (variable, file, class, component).
-4. When adding a `try/catch`, decide which of the three actions applies before writing the catch body. If the answer is "none of them", delete the `try/catch`.
+3. For component scripts and standalone modules, structure the top of the file intentionally: imports first under `// Include our external dependencies`, then `Component Props` immediately after the import/env block in Svelte, then the remaining sections in a clear narrative order.
+4. When choosing a name, match the casing convention for that kind of thing (variable, file, class, component).
+5. When adding a `try/catch`, decide which of the three actions applies before writing the catch body. If the answer is "none of them", delete the `try/catch`.
 
 When reviewing code:
 
 - Flag single-use helpers that don't clarify anything.
 - Flag logic sections with no comment.
+- Flag component scripts or modules whose imports, props, state, and setup are mixed together without clear sectioning.
 - Flag silent-catch blocks and unhandled promise rejections.
 - Flag casing mismatches against the conventions above.
