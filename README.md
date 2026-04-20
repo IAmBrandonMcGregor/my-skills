@@ -8,6 +8,7 @@ All skills in this repo are prefixed with `brandon-` so they won't collide with 
 
 | Skill | Description |
 |-------|-------------|
+| [`brandon-bootstrap`](./skills/brandon-bootstrap) | Bootstrap-first UI conventions — prefer utility classes, push theme changes into Bootstrap tokens first, and minimize standalone CSS. |
 | [`brandon-web-dev-baseline`](./skills/brandon-web-dev-baseline) | Baseline code-quality guidance for JS, HTML, CSS, Svelte — function sizing, comment density, naming conventions, error handling. |
 | [`brandon-svelte`](./skills/brandon-svelte) | Svelte-specific patterns: when to use context vs `$state` vs stores, global state vs component state, async/await vs promises. |
 
@@ -55,6 +56,8 @@ my-skills/
 ├── LICENSE
 ├── .gitignore
 └── skills/
+    ├── brandon-bootstrap/
+    │   └── SKILL.md          # Bootstrap-first styling and theming conventions
     ├── brandon-web-dev-baseline/
     │   └── SKILL.md          # YAML frontmatter + markdown body
     └── brandon-svelte/
