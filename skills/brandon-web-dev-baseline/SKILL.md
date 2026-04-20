@@ -1,23 +1,24 @@
 ---
 name: brandon-web-dev-baseline
-description: Brandon's personal baseline code-quality conventions for any web development work — JavaScript, TypeScript, HTML, CSS, or Svelte. Covers function sizing (inverse relationship between length and call-site count), required TSDoc/JSDoc comments on named functions, liberal inline commenting of logic sections, predictable top-of-file structure for modules and Svelte component scripts, naming conventions for variables/files/CSS classes, and error-handling philosophy. Use this skill whenever writing, reviewing, or refactoring code in a web project; whenever deciding whether to extract a helper or inline something; whenever organizing imports, props, state, or section comments in a component/module; whenever choosing variable, file, or class names; and whenever a `try/catch`, `throw`, or promise rejection is involved. Also apply when the user mentions "clean up", "refactor", "split this up", or asks for a code review on web code.
+description: Brandon's personal baseline code-quality conventions for any web development work — JavaScript, TypeScript, HTML, CSS, or Svelte. Covers function sizing (inverse relationship between length and call-site count), required TSDoc/JSDoc comments on named functions, liberal inline commenting of logic sections, predictable top-of-file structure for modules and Svelte component scripts, modern CSS-first custom styling rules, naming conventions for variables/files/CSS classes, and error-handling philosophy. Use this skill whenever writing, reviewing, or refactoring code in a web project; whenever deciding whether to extract a helper or inline something; whenever organizing imports, props, state, or section comments in a component/module; whenever choosing variable, file, or class names; whenever deciding how to style a custom UI; and whenever a `try/catch`, `throw`, or promise rejection is involved. Also apply when the user mentions "clean up", "refactor", "split this up", or asks for a code review on web code.
 license: MIT
 metadata:
   author: iambrandonmcgregor
-  version: "1.2"
+  version: "1.3"
 ---
 
 # Web dev baseline
 
 Opinionated code-quality conventions that apply to every web project I work on. Follow these whenever writing or editing JavaScript, TypeScript, HTML, CSS, or Svelte — and for other languages, treat them as sensible defaults unless something else overrides.
 
-The five topics covered here:
+The six topics covered here:
 
 1. Function sizing and TSDoc/JSDoc function documentation
 2. Inline comments on logic sections
 3. Top-of-file structure for modules and component scripts
-4. Naming conventions
-5. Error handling
+4. Modern CSS for all custom styling
+5. Naming conventions
+6. Error handling
 
 Each section states the rule, explains *why* it matters, then shows concrete right/wrong examples. The examples are the most important part — prefer pattern-matching the examples over parsing the prose.
 
@@ -328,7 +329,82 @@ This is harder to scan because the imports are not at the top, props/state/setup
 
 ---
 
-## 4. Naming conventions
+## 4. Modern CSS for all custom styling
+
+**The rule.** For all custom styling, use modern native CSS features first. Do not ship legacy hacks, JS styling workarounds, or preprocessor-era patterns when native CSS already solves the problem.
+
+Reference examples and comparisons: <https://modern-css.com/#all-comparisons>
+
+**Use these defaults.**
+
+- Use `gap` for spacing between flex/grid children instead of margin chains and `:last-child` overrides.
+- Use `aspect-ratio` instead of padding-based ratio hacks.
+- Use `@container` for component responsiveness when layout depends on container size.
+- Use `:focus-visible` for keyboard focus states instead of removing outlines globally.
+- Use native CSS custom properties and native nesting instead of Sass-only variable/mixin/nesting patterns.
+- Keep specificity low with `:where()` and good selector design; avoid `!important` escalation.
+
+**Compatibility rule.** When browser support is uncertain, gate modern features with `@supports` and provide a fallback. Do not default back to old hacks.
+
+### Wrong: legacy spacing and ratio hacks
+
+```css
+.card-row > * {
+  margin-right: 16px;
+}
+
+.card-row > *:last-child {
+  margin-right: 0;
+}
+
+.media {
+  position: relative;
+  padding-top: 56.25%;
+}
+
+.media > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+```
+
+### Right: modern native CSS
+
+```css
+.card-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.media > img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+```
+
+### Wrong: global focus reset
+
+```css
+*:focus {
+  outline: none;
+}
+```
+
+### Right: keyboard-visible focus treatment
+
+```css
+:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+```
+
+---
+
+## 5. Naming conventions
 
 ### Variables and functions (JS/TS)
 
@@ -396,7 +472,7 @@ src/
 
 ---
 
-## 5. Error handling philosophy
+## 6. Error handling philosophy
 
 **The rule.** Handle errors where you have the information to decide what to do. Let them propagate otherwise. Never swallow an error silently.
 
@@ -481,13 +557,15 @@ When editing or writing code:
 1. Before writing a new function, ask: how many places will call this? If the answer is "one, probably forever", inline it unless it meaningfully clarifies the caller.
 2. As you write each logical section (3-10 lines of related work), lead it with a short comment naming the intent.
 3. For component scripts and standalone modules, structure the top of the file intentionally: imports first under `// Include our external dependencies`, then `Component Props` immediately after the import/env block in Svelte, then the remaining sections in a clear narrative order.
-4. When choosing a name, match the casing convention for that kind of thing (variable, file, class, component).
-5. When adding a `try/catch`, decide which of the three actions applies before writing the catch body. If the answer is "none of them", delete the `try/catch`.
+4. For all custom styling, prefer modern native CSS over legacy hacks. If support is uncertain, use `@supports` plus a fallback.
+5. When choosing a name, match the casing convention for that kind of thing (variable, file, class, component).
+6. When adding a `try/catch`, decide which of the three actions applies before writing the catch body. If the answer is "none of them", delete the `try/catch`.
 
 When reviewing code:
 
 - Flag single-use helpers that don't clarify anything.
 - Flag logic sections with no comment.
 - Flag component scripts or modules whose imports, props, state, and setup are mixed together without clear sectioning.
+- Flag custom CSS that uses legacy hacks where a modern native feature exists.
 - Flag silent-catch blocks and unhandled promise rejections.
 - Flag casing mismatches against the conventions above.
