@@ -1,10 +1,10 @@
 ---
 name: brandon-git
-description: Brandon's Git writing conventions for imperative commit messages, PR titles, changelog entries derived from commits, and commit or PR suggestions. Use this skill whenever writing, reviewing, rewriting, or suggesting Git commit messages, GitHub pull request titles, changelog or release-note entries based on commits, merge/squash commit text, or version-control history summaries.
+description: Brandon's Git conventions for immutable history plus imperative commit messages, PR titles, changelog entries derived from commits, and commit or PR suggestions. Use this skill whenever writing, reviewing, rewriting, or suggesting Git commit messages, GitHub pull request titles, changelog or release-note entries based on commits, merge/squash commit text, version-control history summaries, or any operation that could revise committed Git history.
 license: MIT
 metadata:
   author: iambrandonmcgregor
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Brandon Git
@@ -22,6 +22,20 @@ Before creating or suggesting a commit message, PR title, or commit-derived chan
 5. It is around 50 characters when practical, while staying specific enough to be useful.
 
 If the first draft fails any item, rewrite it until it satisfies the checklist before creating the commit or PR.
+
+## Treat Git history as immutable
+
+Consider written Git history immutable. Do not revise existing commits, branch history, or published refs unless the user explicitly asks for a history rewrite.
+
+History-rewriting operations include `git commit --amend`, interactive or non-fast-forward rebases, squash/fixup rewrites, `git reset` that moves a branch to change committed history, `git filter-branch`, `git filter-repo`, `git push --force`, and equivalent tooling.
+
+When the user explicitly asks for one of these operations:
+
+1. State that it rewrites Git history.
+2. Name the branch, commit range, or ref that will be affected.
+3. Ask for confirmation before executing when a user prompt is available.
+
+Prefer additive fixes such as a new commit or `git revert` when the goal can be achieved without rewriting history.
 
 ## Commit message bodies
 
