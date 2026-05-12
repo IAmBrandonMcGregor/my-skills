@@ -11,6 +11,8 @@ metadata:
 
 Opinionated code-quality conventions that apply to every web project I work on. Follow these whenever writing or editing JavaScript, TypeScript, HTML, CSS, or Svelte — and for other languages, treat them as sensible defaults unless something else overrides.
 
+Before implementation, when useful, proactively ask me 1–7 concise questions that challenge assumptions, surface missing angles, and clarify goals.
+
 The six topics covered here:
 
 1. Function sizing and TSDoc/JSDoc function documentation
