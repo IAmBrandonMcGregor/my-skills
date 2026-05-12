@@ -166,6 +166,81 @@ Keep it local until it isn't.
 
 ---
 
+## Active-item state pattern
+
+When a component needs one active option from a known in-memory array, store the active object reference in `$state` instead of storing a primitive key and repeatedly resolving the object with `find()`.
+
+- Prefer: `let activeOption = $state(options[0]);`
+- Avoid: `let activeId = $state(options[0].id)` plus repeated `options.find(...)` in derived values and template labels.
+
+Why this is the default:
+
+- Avoids repeated `O(n)` lookups in render/derived paths.
+- Keeps display access direct (`activeOption.label`, `activeOption.direction`).
+- Makes active checks trivial in `#each` (`activeOption === option`), which is less brittle than comparing labels.
+
+```svelte
+<script lang="ts">
+  type NetworkSortDirection = "desc" | "asc";
+  type NetworkSortOption = {
+    direction: NetworkSortDirection;
+    label: string;
+  };
+
+  const networkSortOptions: ReadonlyArray<NetworkSortOption> = [
+    { direction: "desc", label: "Highest to Lowest" },
+    { direction: "asc", label: "Lowest to Highest" },
+  ];
+
+  // Keep the active object reference directly in state.
+  let activeNetworkSortOption = $state(networkSortOptions[0]);
+
+  const sortedNetworks = $derived.by(() => {
+    const sortableNetworks = [...networks_arr];
+
+    sortableNetworks.sort((networkA, networkB) => {
+      const compositeA =
+        selectedScan?.metrics?.[networkA.id]?.composite ??
+        Number.NEGATIVE_INFINITY;
+      const compositeB =
+        selectedScan?.metrics?.[networkB.id]?.composite ??
+        Number.NEGATIVE_INFINITY;
+
+      if (activeNetworkSortOption.direction === "desc") {
+        return compositeB - compositeA;
+      }
+
+      return compositeA - compositeB;
+    });
+
+    return sortableNetworks;
+  });
+</script>
+
+<Dropdown theme="">
+  <DropdownToggle color="" class="btn text-nowrap">
+    {activeNetworkSortOption.label}
+    <i class="ph-duotone ph-funnel fs-5" aria-hidden="true"></i>
+  </DropdownToggle>
+  <DropdownMenu>
+    {#each networkSortOptions as option (option.direction)}
+      <DropdownItem
+        onclick={() => {
+          activeNetworkSortOption = option;
+        }}
+        active={activeNetworkSortOption === option}
+      >
+        {option.label}
+      </DropdownItem>
+    {/each}
+  </DropdownMenu>
+</Dropdown>
+```
+
+Single-use extraction exception: if the inline logic becomes genuinely large or hard to scan, you may extract it. Only do that when the extraction makes the caller materially easier to read and the helper has a clear name, clear parameters, and useful internal comments.
+
+---
+
 ## 2. Stores vs `.svelte.js` runes files
 
 Svelte 4's `writable`/`readable`/`derived` stores still work in Svelte 5, and they remain the right answer in two cases. Otherwise, prefer a `.svelte.js` file with runes.
