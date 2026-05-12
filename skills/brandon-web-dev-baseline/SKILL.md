@@ -163,6 +163,43 @@ function bootstrapApp() {
 
 ---
 
+## Single-Use Helper Functions
+
+Do not extract short helper functions that are called exactly once, especially JavaScript/TypeScript helpers that only normalize a value, check a simple condition, or pick a fallback value. Keep that logic inline at the call site with a brief comment above the section.
+
+Avoid this pattern:
+
+```js
+function getUserEmail(event) {
+  if (typeof event.user.email !== 'string') return '';
+
+  return event.user.email.trim().toLowerCase();
+}
+
+function isEyethreeEmail(email) {
+  return email.endsWith('@eyethree.ai');
+}
+
+exports.onExecutePostLogin = async (event, api) => {
+  const email = getUserEmail(event);
+  const isTester = isEyethreeEmail(email);
+};
+```
+
+Prefer this pattern:
+
+```js
+exports.onExecutePostLogin = async (event, api) => {
+  // Normalize the email once for both the tester-domain check and downstream headers.
+  const email = typeof event.user.email === 'string'
+    ? event.user.email.trim().toLowerCase()
+    : '';
+  const isTester = email.endsWith('@eyethree.ai');
+};
+```
+
+Single-use functions are acceptable only when the extraction makes the caller meaningfully easier to read by abstracting a large, arduous block of code behind a clear name, clear parameters, and useful internal comments. Do not extract tiny one-off helpers just to name a two-line operation.
+
 ## 2. Inline comments on every logic section
 
 **The rule.** Every non-trivial logic section in a function gets a short comment explaining *what is happening* and, where useful, *why*. Not every line — that's noise. Every **section**, where a section is a paragraph of related statements.
