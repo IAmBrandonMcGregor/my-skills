@@ -45,6 +45,16 @@ Use a body only when the subject cannot carry the useful context on its own.
 - Explain what changed and why the change matters.
 - Do not use the body merely to restate how the code changed; the diff already shows that.
 
+## Commit attribution policy
+
+When creating commits as an agent, do not credit the agent in commit metadata.
+
+- Do not add `Co-authored-by` trailers for the agent.
+- Do not add `Signed-off-by` or custom trailers that identify the agent.
+- Do not add agent attribution in the commit subject or body.
+
+Commit authorship should reflect only the user/repository's normal Git identity configuration unless the user explicitly requests a specific attribution format.
+
 ## Reviews and suggestions
 
 When reviewing existing commits or PRs, flag non-imperative subjects and suggest corrected versions. Focus on the subject line first because it is reused in logs, squash commits, release notes, and changelogs.
