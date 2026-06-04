@@ -368,7 +368,7 @@ This is harder to scan because the imports are not at the top, props/state/setup
 
 ## 4. Modern CSS for all custom styling
 
-**The rule.** For all custom styling, use modern native CSS features first. Do not ship legacy hacks, JS styling workarounds, or preprocessor-era patterns when native CSS already solves the problem.
+**The rule.** For all custom styling and presentational behavior, use modern native CSS features first. Prefer well-supported CSS and HTML primitives over JavaScript/TypeScript logic whenever CSS can solve the problem clearly. Do not ship legacy hacks, JS styling workarounds, JS measurement code, or preprocessor-era patterns when native CSS already solves the problem.
 
 Reference examples and comparisons: <https://modern-css.com/#all-comparisons>
 
@@ -379,7 +379,10 @@ Reference examples and comparisons: <https://modern-css.com/#all-comparisons>
 - Use `@container` for component responsiveness when layout depends on container size.
 - Use `:focus-visible` for keyboard focus states instead of removing outlines globally.
 - Use native CSS custom properties and native nesting instead of Sass-only variable/mixin/nesting patterns.
+- Use well-supported CSS selectors, pseudo-classes, media queries, and native primitives before adding JS/TS state for purely visual behavior.
 - Keep specificity low with `:where()` and good selector design; avoid `!important` escalation.
+
+**CSS over JS/TS rule.** Before adding JavaScript/TypeScript to manage layout, responsiveness, hover/focus/active state, disclosure state, animations, scroll behavior, or theme presentation, first check whether CSS or a native HTML element handles it cleanly. Reach for JS/TS only when the behavior is genuinely application logic, depends on data that CSS cannot observe, requires persistence/networking, or needs accessibility behavior that native primitives do not provide.
 
 **Compatibility rule.** When browser support is uncertain, gate modern features with `@supports` and provide a fallback. Do not default back to old hacks.
 
@@ -436,6 +439,23 @@ Reference examples and comparisons: <https://modern-css.com/#all-comparisons>
 :focus-visible {
   outline: 2px solid var(--focus-ring-color);
   outline-offset: 2px;
+}
+```
+
+### Wrong: JS-driven responsive styling
+
+```ts
+const isCompact = window.innerWidth < 720;
+document.body.classList.toggle("is-compact", isCompact);
+```
+
+### Right: CSS owns presentation
+
+```css
+@media (width < 45rem) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
 }
 ```
 
@@ -594,7 +614,7 @@ When editing or writing code:
 1. Before writing a new function, ask: how many places will call this? If the answer is "one, probably forever", inline it unless it meaningfully clarifies the caller.
 2. As you write each logical section (3-10 lines of related work), lead it with a short comment naming the intent.
 3. For component scripts and standalone modules, structure the top of the file intentionally: imports first under `// Include our external dependencies`, then `Component Props` immediately after the import/env block in Svelte, then the remaining sections in a clear narrative order.
-4. For all custom styling, prefer modern native CSS over legacy hacks. If support is uncertain, use `@supports` plus a fallback.
+4. For all custom styling and presentational behavior, prefer well-supported modern CSS and native HTML over JS/TS logic. If support is uncertain, use `@supports` plus a fallback.
 5. When choosing a name, match the casing convention for that kind of thing (variable, file, class, component).
 6. When adding a `try/catch`, decide which of the three actions applies before writing the catch body. If the answer is "none of them", delete the `try/catch`.
 
@@ -604,5 +624,6 @@ When reviewing code:
 - Flag logic sections with no comment.
 - Flag component scripts or modules whose imports, props, state, and setup are mixed together without clear sectioning.
 - Flag custom CSS that uses legacy hacks where a modern native feature exists.
+- Flag JS/TS that manages purely presentational behavior CSS or native HTML can handle.
 - Flag silent-catch blocks and unhandled promise rejections.
 - Flag casing mismatches against the conventions above.
